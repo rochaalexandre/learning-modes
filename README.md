@@ -66,3 +66,28 @@ The selected mode stays active for the current conversation until you explicitly
 The startup instructions also recognize `LEARNING MODE` and `WORKING MODE` as explicit switches. Slash forms are recognized when submitted as message text, but Codex may intercept unknown slash commands; use its native `$` forms.
 
 To adjust the teaching approach, edit `skills/learning-system/references/learning.md`. Shared engineering practices live in `shared.md`, and Working Mode guidance lives in `working.md` in the same directory. Both apps read the same repository files through the symlinks, so edits and pulled changes require no reinstall. Start a new conversation if an active session still uses previously loaded guidance. Keep this checkout at a stable location; if you move it, rerun the installer from its new location with `--force` to update the links.
+
+## Learn by coding
+
+Use Learning Mode alongside [CodeCrafters](https://codecrafters.io/) challenges or [roadmap.sh projects](https://roadmap.sh/projects/) to learn new topics or practice existing skills through implementation.
+
+- **CodeCrafters:** explore how familiar tools work by building your own versions of systems such as a shell, Redis, or Git.
+- **roadmap.sh projects:** choose a project to practice a language, technology, or area of software development.
+
+Open the project repository in Codex or Claude Code, select Learning Mode, and bring the current requirement, your implementation, or a failing test into the conversation. Use the agent to question assumptions, examine trade-offs, interpret feedback, and connect what you observe to reusable concepts.
+
+For example, in Claude Code:
+
+```text
+/learn-mode I’m implementing the next stage of my CodeCrafters shell.
+Help me reason about where command parsing should end and execution should begin.
+```
+
+Or in Codex:
+
+```text
+$learn-mode I’m building a project from roadmap.sh.
+Help me plan one small feature, then review my implementation and the trade-offs.
+```
+
+Keep the reasoning and implementation you want to practice in your hands. Ask for hints, explanations, or direct help as needed, and switch to Working Mode when you want the agent to execute an agreed change.
