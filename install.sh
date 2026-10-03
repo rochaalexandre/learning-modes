@@ -40,13 +40,17 @@ reject_symlinks() {
 }
 
 prepare_target() {
-  local app=$1 skills instructions src dst relative staged block
+  local app=$1 skills instructions src dst staged block skill backup reference native_commands
   if [[ $app == codex ]]; then
     skills="$install_home/.agents/skills"
     instructions="$install_home/.codex/AGENTS.md"
+    reference="Read and apply ../.agents/skills/learning-system/SKILL.md (relative to this AGENTS.md file)."
+    native_commands='Codex also accepts native $learn-mode and $work-mode skill mentions.'
   else
     skills="$install_home/.claude/skills"
     instructions="$install_home/.claude/CLAUDE.md"
+    reference="@skills/learning-system/SKILL.md"
+    native_commands=""
   fi
   for skill in learn-mode work-mode learning-system; do
     src="$root/skills/$skill"
@@ -75,8 +79,12 @@ prepare_target() {
   cat > "$block" <<BLOCK
 <!-- learning-modes:start -->
 # Learning and working modes
-At the start of a fresh conversation, default to Learning Mode. Read and apply the learning-system skill at $skills/learning-system/SKILL.md.
-Keep the current conversation mode until I explicitly switch. Recognize /learn-mode or LEARNING MODE and /work-mode or WORKING MODE. Codex also accepts native \$learn-mode and \$work-mode skill mentions. Do not reset the mode because a task changes or a skill reloads. Preserve the current mode in compaction summaries.
+At the start of a fresh conversation, default to Learning Mode.
+
+$reference
+
+Keep the current conversation mode until I explicitly switch. Recognize /learn-mode or LEARNING MODE and /work-mode or WORKING MODE. $native_commands
+Do not reset the mode because a task changes or a skill reloads. Preserve the current mode in compaction summaries.
 <!-- learning-modes:end -->
 BLOCK
   if [[ -f $instructions ]]; then

@@ -41,6 +41,8 @@ bash install.sh --target both --force
 
 If your startup instructions already import the original `LearningSystem.md`, remove that import after checking the new setup to avoid overlapping mode instructions. The installer leaves existing imports and the original document untouched.
 
+Claude’s startup block imports the linked skill with `@skills/learning-system/SKILL.md`, relative to `~/.claude/CLAUDE.md`. Codex’s block asks the agent to read `../.agents/skills/learning-system/SKILL.md`, relative to `~/.codex/AGENTS.md`. Neither block embeds your username or the repository’s absolute path.
+
 Start a new conversation after installation.
 
 ## Usage
