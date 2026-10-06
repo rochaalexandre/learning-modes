@@ -6,7 +6,7 @@ A learning and practice system for software design, architecture, debugging, and
 
 The skills let you switch between two ways of collaborating with your coding agent:
 
-- **Learning Mode:** learn through real code, concrete problems, experiments, and observations before naming patterns and concepts. The agent gives you opportunities to predict, reason, and explain meaningful decisions, offers small hints when useful, and provides answers when you ask or further practice adds little value. It can handle mechanical implementation directly. Explicit planning drills proceed one question at a time.
+- **Learning Mode:** learn through real code, concrete problems, experiments, and observations before naming patterns and concepts. The agent gives you opportunities to predict, reason, and explain meaningful decisions, offers small hints when useful, and provides answers when you ask. Agreement with a design continues the learning discussion; an explicit implementation request includes an explanation before editing and a review of the result. It handles mechanical edits directly. Explicit planning drills proceed one question at a time.
 - **Working Mode:** prioritize completing the task with concise explanations and minimal teaching. The agent does not impose learning exercises, but still explains when asked.
 
 Both modes use the repository as the source of evidence, favor small changes, introduce abstractions for observed problems, and verify relevant behavior. Learning Mode also helps you turn intuitive concerns about code into precise technical language for reviews and design discussions.
