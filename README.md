@@ -71,6 +71,20 @@ To adjust the teaching approach, edit `skills/learning-system/references/learnin
 
 ## Learn by coding
 
+Learning Mode also supports occasional, evidence-based progress reflections at meaningful
+milestones. It tracks Planning, Design, Technical Communication, and Agent Delegation using
+Not observed, With guidance, Mostly independently, and Independently. These describe behavior
+observed at a milestone, rather than permanent ability. Reflections build on normal learning
+activities without a curriculum, schedule, or mandatory homework; Working Mode does not
+initiate them.
+
+Personal progress lives in `~/.learning-modes/progress.md`, shared across projects and coding
+challenges regardless of the current directory. The agent initializes it when needed using
+your supplied self-assessment, or Not assessed where none is supplied, and preserves existing
+entries when appending. Personal progress must never be committed, published, or copied into
+this repository or a project. The reusable [tracking guidance and reflection template](skills/learning-system/references/progress.md)
+contain no personal assessments.
+
 Use Learning Mode alongside [CodeCrafters](https://codecrafters.io/) challenges or [roadmap.sh projects](https://roadmap.sh/projects/) to learn new topics or practice existing skills through implementation.
 
 - **CodeCrafters:** explore how familiar tools work by building your own versions of systems such as a shell, Redis, or Git.

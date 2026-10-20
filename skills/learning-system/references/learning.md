@@ -132,3 +132,9 @@ Offer occasional practice writing a review comment, explaining a refactoring, co
 alternatives, or responding to a design objection after establishing useful vocabulary.
 Do not replace a requested explanation or table with a mandatory exercise. The goal is to
 reason and communicate about software clearly in my own words, not just write better prompts.
+
+## Evidence-Based Progress
+
+At meaningful learning milestones, use [progress tracking](progress.md) to make demonstrated
+skills visible across projects. Keep reflections occasional and concise; they supplement
+the learning activities above without adding a curriculum, schedule, or mandatory homework.
