@@ -1,109 +1,82 @@
-# Learning modes for Codex and Claude Code
+# Software Engineering Mentor
 
-A learning and practice system for software design, architecture, debugging, and technical communication, tailored to Alexandre’s learning style. It uses concrete code, experiments, and observations to explore engineering concepts and decisions, supporting both learning new topics and deliberate practice to refine existing skills.
+A practical mentor for Codex and Claude Code that develops independent reasoning through real software work across repositories. One skill supports roadmap planning, decomposition, design, pair programming, code and commit review, and technical communication.
 
-## What the skills do
+The mentor starts with concrete examples, uses experiments and feedback, and introduces concepts and vocabulary in context. The learner implements by default; explicitly ask for implementation when you want the agent to edit code. Explanations remain available without completing an exercise. When an approach stops helping, the mentor switches to a smaller demonstration or hands-on debugging.
 
-The skills let you switch between two ways of collaborating with your coding agent:
+## Install and initialize
 
-- **Learning Mode:** learn through real code, concrete problems, experiments, and observations before naming patterns and concepts. The agent gives you opportunities to predict, reason, and explain meaningful decisions, offers small hints when useful, and provides answers when you ask. Agreement with a design continues the learning discussion; an explicit implementation request includes an explanation before editing and a review of the result. It handles mechanical edits directly. Explicit planning drills proceed one question at a time.
-- **Working Mode:** prioritize completing the task with concise explanations and minimal teaching. The agent does not impose learning exercises, but still explains when asked.
-
-Both modes use the repository as the source of evidence, favor small changes, introduce abstractions for observed problems, and verify relevant behavior. Learning Mode also helps you turn intuitive concerns about code into precise technical language for reviews and design discussions.
-
-## Installation
-
-Requires Bash and standard Unix utilities. From the package directory, run:
+Requires Bash and standard Unix utilities; no runtime package dependencies.
 
 ```sh
+git clone https://github.com/rochaalexandre/learning-modes.git
+cd learning-modes
 bash install.sh --target both
 ```
 
-To install for only one app:
+Use `--target codex` or `--target claude` for one agent. `--home DIR` selects an existing alternate home for testing or provisioning; it does not change the home resolved by a running agent.
 
-```sh
-bash install.sh --target codex
-bash install.sh --target claude
+| Agent | Skill link | Startup instructions |
+|---|---|---|
+| Codex | `~/.agents/skills/software-engineering-mentor` | `~/.codex/AGENTS.md` |
+| Claude Code | `~/.claude/skills/software-engineering-mentor` | `~/.claude/CLAUDE.md` |
+
+The installer links the skill to this checkout, adds a conditional mentor pointer to startup instructions, and initializes missing local memory files. Startup content outside the managed block is retained, with a backup when changed. Keep the checkout at a stable location and start a new conversation after installation.
+
+For manual installation, place `skills/software-engineering-mentor/` in your agent's skills directory. The skill describes how to initialize memory if the installer was skipped.
+
+## Use
+
+Invoke `$software-engineering-mentor` in Codex or `/software-engineering-mentor` in Claude Code, followed by a request. The skill can also be selected for a mentoring request through its description and installed startup pointer.
+
+```text
+Help me plan one small feature before I implement it.
+Review this commit and help me reason about the responsibilities in this class.
+Show a smaller example of this execution flow, then let me experiment.
+Help me turn this code concern into a precise review comment.
+Plan a practical roadmap toward designing services.
+Implement the agreed change and explain the important trade-off.
 ```
 
-The installer creates symlinks from the selected app’s personal skill directory to the three skill directories in this repository and adds startup instructions so new conversations begin in Learning Mode.
+Open any project and bring a requirement, code change, or failing test. There is no mode to switch. Assistance adapts to your request and observed progress.
 
-| App | Skills directory | Startup instructions |
-|---|---|---|
-| Codex | `~/.agents/skills` | `~/.codex/AGENTS.md` |
-| Claude Code | `~/.claude/skills` | `~/.claude/CLAUDE.md` |
+## Reusable files and personal memory
 
-Existing startup instructions are preserved and backed up when changed. Existing skill directories or links to another checkout require `--force`; they are moved into `~/.learning-modes-backups` before the new links are created. Links that already point here are left unchanged. To migrate from the previous copy-based installation, run:
+The version-controlled [skill](skills/software-engineering-mentor/SKILL.md), [memory guidance](skills/software-engineering-mentor/references/memory.md), and [templates](skills/software-engineering-mentor/assets/) contain reusable guidance and unassessed defaults.
+
+Personal data lives only on your machine:
+
+```text
+~/.software-engineering-mentor/
+├── learning-profile.md
+├── progress.md
+└── archive/
+```
+
+Edit `learning-profile.md` to change durable preferences. Installation and updates preserve existing files. Initial progress focuses on software planning and decomposition, software design, and technical communication. The mentor consolidates meaningful observations, recurring difficulties, and next needs automatically. Active progress stays within 120 lines with a few representative observations per focus. Completing an exercise is not mastery; evidence distinguishes independent work from guided work.
+
+To reset a cycle, ask: “Start a fresh learning cycle focused on software design.” To change focus, explicitly name the new goals. The mentor saves and verifies the previous active file in `archive/` before starting the new cycle, preserving your profile. Finishing an exercise leaves the cycle active. Archives are consulted only for relevant new goals or requested history. Archiving does not imply mastery. Persistence requires local file access; if unavailable, the mentor reports that the update was not saved.
+
+## Update and migrate
 
 ```sh
+git pull --ff-only
 bash install.sh --target both --force
 ```
 
-If your startup instructions already import the original `LearningSystem.md`, remove that import after checking the new setup to avoid overlapping mode instructions. The installer leaves existing imports and the original document untouched.
+Linked skill content updates with the checkout. Rerun installation to update startup instructions and migrate old installations. `--force` backs up conflicting skill destinations and retires old `learn-mode`, `work-mode`, and `learning-system` entries into `~/.learning-modes-backups/` before linking the new skill. Existing correct mentor links are unchanged. Backed-up links retain their original targets; old reusable instructions remain available in Git history. If you move the checkout, rerun installation from its new location with `--force`.
 
-Claude’s startup block imports the linked skill with `@skills/learning-system/SKILL.md`, relative to `~/.claude/CLAUDE.md`. Codex’s block asks the agent to read `../.agents/skills/learning-system/SKILL.md`, relative to `~/.codex/AGENTS.md`. Neither block embeds your username or the repository’s absolute path.
+The installer replaces the previous `learning-modes` managed block and recognizes the new mentor block on later runs. Malformed or duplicate blocks stop installation before target changes. Manually added imports of the original `LearningSystem.md` or other mode instructions outside the managed block are preserved; inspect and remove those obsolete imports to avoid conflicting instructions.
 
-Start a new conversation after installation.
+Existing `~/.learning-modes/progress.md` stays untouched and is copied once to `~/.software-engineering-mentor/archive/legacy-learning-modes.md`. Existing mentor profiles, active progress, and archives are preserved even with `--force`. Legacy assessments remain history rather than becoming new mastery claims or active goals. Keep personal learning data outside this repository.
 
-## Usage
+This evolves example-first teaching, engineering trade-offs, communication practice, cross-project memory, and backed-up symlink installation. It removes mode selection and retention, mandatory pre-implementation exercises, fixed assessment levels, the default delegation competency, and append-only reflections.
 
-New conversations start in **Learning Mode**. Switch modes using your app’s native skill commands:
+## Validate changes
 
-| App | Enable Learning Mode | Enable Working Mode |
-|---|---|---|
-| Claude Code | `/learn-mode` | `/work-mode` |
-| Codex CLI / IDE | `$learn-mode` | `$work-mode` |
-
-You can send the switch on its own or include a task:
-
-```text
-/learn-mode Help me reason about the responsibilities in this module.
-/work-mode Implement the agreed refactoring and run the relevant tests.
+```sh
+bash -n install.sh
+bash tests/install.sh
 ```
 
-In Codex, use `$learn-mode` or `$work-mode` in those examples. In the desktop skill picker, select the corresponding skill.
-
-The selected mode stays active for the current conversation until you explicitly switch it. Asking for implementation, debugging, or refactoring does not change the mode. A fresh conversation starts in Learning Mode again. Mode retention relies on the agent following conversation instructions.
-
-The startup instructions also recognize `LEARNING MODE` and `WORKING MODE` as explicit switches. Slash forms are recognized when submitted as message text, but Codex may intercept unknown slash commands; use its native `$` forms.
-
-To adjust the teaching approach, edit `skills/learning-system/references/learning.md`. Shared engineering practices live in `shared.md`, and Working Mode guidance lives in `working.md` in the same directory. Both apps read the same repository files through the symlinks, so edits and pulled changes require no reinstall. Start a new conversation if an active session still uses previously loaded guidance. Keep this checkout at a stable location; if you move it, rerun the installer from its new location with `--force` to update the links.
-
-## Learn by coding
-
-Learning Mode also supports occasional, evidence-based progress reflections at meaningful
-milestones. It tracks Planning, Design, Technical Communication, and Agent Delegation using
-Not observed, With guidance, Mostly independently, and Independently. These describe behavior
-observed at a milestone, rather than permanent ability. Reflections build on normal learning
-activities without a curriculum, schedule, or mandatory homework; Working Mode does not
-initiate them.
-
-Personal progress lives in `~/.learning-modes/progress.md`, shared across projects and coding
-challenges regardless of the current directory. The agent initializes it when needed using
-your supplied self-assessment, or Not assessed where none is supplied, and preserves existing
-entries when appending. Personal progress must never be committed, published, or copied into
-this repository or a project. The reusable [tracking guidance and reflection template](skills/learning-system/references/progress.md)
-contain no personal assessments.
-
-Use Learning Mode alongside [CodeCrafters](https://codecrafters.io/) challenges or [roadmap.sh projects](https://roadmap.sh/projects/) to learn new topics or practice existing skills through implementation.
-
-- **CodeCrafters:** explore how familiar tools work by building your own versions of systems such as a shell, Redis, or Git.
-- **roadmap.sh projects:** choose a project to practice a language, technology, or area of software development.
-
-Open the project repository in Codex or Claude Code, select Learning Mode, and bring the current requirement, your implementation, or a failing test into the conversation. Use the agent to question assumptions, examine trade-offs, interpret feedback, and connect what you observe to reusable concepts.
-
-For example, in Claude Code:
-
-```text
-/learn-mode I’m implementing the next stage of my CodeCrafters shell.
-Help me reason about where command parsing should end and execution should begin.
-```
-
-Or in Codex:
-
-```text
-$learn-mode I’m building a project from roadmap.sh.
-Help me plan one small feature, then review my implementation and the trade-offs.
-```
-
-Keep the reasoning and implementation you want to practice in your hands. Ask for hints, explanations, or direct help as needed, and switch to Working Mode when you want the agent to execute an agreed change.
+Tests use disposable homes for both agents and cover repeat installation, upgrades, data preservation, archival, malformed blocks, conflicts, and symlink refusal. Skill metadata uses the shared `SKILL.md` name and description format. Native agent discovery still needs a smoke test in a fresh session of each installed agent.

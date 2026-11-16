@@ -40,19 +40,17 @@ reject_symlinks() {
 }
 
 prepare_target() {
-  local app=$1 skills instructions src dst staged block skill backup reference native_commands
+  local app=$1 skills instructions src dst staged block skill backup reference
   if [[ $app == codex ]]; then
     skills="$install_home/.agents/skills"
     instructions="$install_home/.codex/AGENTS.md"
-    reference="Read and apply ../.agents/skills/learning-system/SKILL.md (relative to this AGENTS.md file)."
-    native_commands='Codex also accepts native $learn-mode and $work-mode skill mentions.'
+    reference="Read and apply ../.agents/skills/software-engineering-mentor/SKILL.md (relative to this AGENTS.md file)."
   else
     skills="$install_home/.claude/skills"
     instructions="$install_home/.claude/CLAUDE.md"
-    reference="@skills/learning-system/SKILL.md"
-    native_commands=""
+    reference="@skills/software-engineering-mentor/SKILL.md"
   fi
-  for skill in learn-mode work-mode learning-system; do
+  for skill in software-engineering-mentor; do
     src="$root/skills/$skill"
     dst="$skills/$skill"
     [[ -f $src/SKILL.md ]] || fail "Missing skill: $src"
@@ -72,35 +70,51 @@ prepare_target() {
     kinds+=(link)
     backups+=("$backup")
   done
+  # Retire old entrypoints without losing custom files or local data.
+  for skill in learn-mode work-mode learning-system; do
+    dst="$skills/$skill"
+    if [[ -e $dst || -L $dst ]]; then
+      [[ $force == true ]] || fail "Legacy skill exists: $dst. Use --force to back up and retire it."
+      backup="$install_home/.learning-modes-backups/$stamp/$app/$skill"
+      reject_symlinks "$backup"
+      [[ ! -e $backup && ! -L $backup ]] || fail "Backup already exists: $backup"
+      sources+=("$dst")
+      destinations+=("$dst")
+      kinds+=(retire)
+      backups+=("$backup")
+    fi
+  done
   reject_symlinks "$instructions"
   [[ ! -e $instructions || -f $instructions ]] || fail "Expected file: $instructions"
   staged="$staging/$app.instructions"
+  local input="$staging/$app.input"
+  if [[ -f $instructions ]]; then
+    sed -e 's/^<!-- learning-modes:start -->$/<!-- software-engineering-mentor:start -->/' \
+        -e 's/^<!-- learning-modes:end -->$/<!-- software-engineering-mentor:end -->/' \
+        "$instructions" > "$input"
+  fi
   block="$staging/$app.block"
   cat > "$block" <<BLOCK
-<!-- learning-modes:start -->
-# Learning and working modes
-At the start of a fresh conversation, default to Learning Mode.
-
+<!-- software-engineering-mentor:start -->
+# Software Engineering Mentor
+For software engineering mentoring, practice, roadmap planning, or learning progress, apply the mentor:
 $reference
-
-Keep the current conversation mode until I explicitly switch. Recognize /learn-mode or LEARNING MODE and /work-mode or WORKING MODE. $native_commands
-Do not reset the mode because a task changes or a skill reloads. Preserve the current mode in compaction summaries.
-<!-- learning-modes:end -->
+<!-- software-engineering-mentor:end -->
 BLOCK
   if [[ -f $instructions ]]; then
     # Validate markers before writing either target. Replace only the managed block.
     awk '
-      $0 == "<!-- learning-modes:start -->" { if (inside || seen++) exit 1; inside=1 }
-      $0 == "<!-- learning-modes:end -->" { if (!inside) exit 1; inside=0 }
+      $0 == "<!-- software-engineering-mentor:start -->" { if (inside || seen++) exit 1; inside=1 }
+      $0 == "<!-- software-engineering-mentor:end -->" { if (!inside) exit 1; inside=0 }
       END { if (inside) exit 1 }
-    ' "$instructions" || fail "Malformed managed block in $instructions"
+    ' "$input" || fail "Malformed managed block in $instructions"
     awk -v block="$block" '
       function emit() { while ((getline line < block) > 0) print line; close(block) }
-      $0 == "<!-- learning-modes:start -->" { emit(); inside=1; seen=1; next }
-      $0 == "<!-- learning-modes:end -->" { inside=0; next }
+      $0 == "<!-- software-engineering-mentor:start -->" { emit(); inside=1; seen=1; next }
+      $0 == "<!-- software-engineering-mentor:end -->" { inside=0; next }
       !inside { print }
       END { if (!seen) { if (NR) print ""; emit() } }
-    ' "$instructions" > "$staged"
+    ' "$input" > "$staged"
   else
     cp -- "$block" "$staged"
   fi
@@ -117,10 +131,35 @@ else
   prepare_target "$target"
 fi
 
+# Validate all memory paths before changing any installation target.
+memory="$install_home/.software-engineering-mentor"
+for path in "$memory" "$memory/archive" "$memory/learning-profile.md" "$memory/progress.md" "$memory/archive/legacy-learning-modes.md"; do
+  reject_symlinks "$path"
+done
+[[ ! -e $memory || -d $memory ]] || fail "Expected directory: $memory"
+[[ ! -e $memory/archive || -d $memory/archive ]] || fail "Expected archive directory"
+for name in learning-profile.md progress.md; do
+  [[ -f $root/skills/software-engineering-mentor/assets/$name ]] || fail "Missing template: $name"
+  [[ ! -e $memory/$name || -f $memory/$name ]] || fail "Expected memory file: $name"
+done
+legacy="$install_home/.learning-modes/progress.md"
+if [[ -e $legacy ]]; then
+  [[ -f $legacy ]] || fail "Expected legacy progress file: $legacy"
+fi
+mkdir -p -- "$memory/archive"
+if [[ -f $legacy && ! -e $memory/archive/legacy-learning-modes.md ]]; then
+  cp -p -- "$legacy" "$memory/archive/legacy-learning-modes.md"
+fi
+for name in learning-profile.md progress.md; do
+  if [[ ! -e $memory/$name ]]; then
+    cp -- "$root/skills/software-engineering-mentor/assets/$name" "$memory/$name"
+  fi
+done
+
 for ((i=0; i<${#sources[@]}; i++)); do
   src=${sources[i]}
   dst=${destinations[i]}
-  if [[ ${kinds[i]} == link ]]; then
+  if [[ ${kinds[i]} == link || ${kinds[i]} == retire ]]; then
     mkdir -p -- "$(dirname -- "$dst")"
     if [[ -e $dst || -L $dst ]]; then
       backup=${backups[i]}
@@ -128,6 +167,7 @@ for ((i=0; i<${#sources[@]}; i++)); do
       mv -- "$dst" "$backup"
       printf "Backed up %s to %s\n" "$dst" "$backup"
     fi
+    [[ ${kinds[i]} != retire ]] || continue
     ln -s -- "$src" "$dst"
     printf "Linked %s to %s\n" "$dst" "$src"
   else
@@ -143,4 +183,4 @@ for ((i=0; i<${#sources[@]}; i++)); do
     printf "Installed %s\n" "$dst"
   fi
 done
-printf "Done. Start a new conversation to load the skills and default mode.\n"
+printf "Done. Start a new conversation to load the skills and mentor guidance.\n"
