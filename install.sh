@@ -40,17 +40,19 @@ reject_symlinks() {
 }
 
 prepare_target() {
-  local app=$1 skills instructions src dst staged block skill backup reference
+  local app=$1 skills instructions src dst staged block skill backup planner_reference mentor_reference
   if [[ $app == codex ]]; then
     skills="$install_home/.agents/skills"
     instructions="$install_home/.codex/AGENTS.md"
-    reference="Read and apply ../.agents/skills/software-engineering-mentor/SKILL.md (relative to this AGENTS.md file)."
+    planner_reference="../.agents/skills/study-planner/SKILL.md"
+    mentor_reference="../.agents/skills/engineering-mentor/SKILL.md"
   else
     skills="$install_home/.claude/skills"
     instructions="$install_home/.claude/CLAUDE.md"
-    reference="@skills/software-engineering-mentor/SKILL.md"
+    planner_reference="skills/study-planner/SKILL.md"
+    mentor_reference="skills/engineering-mentor/SKILL.md"
   fi
-  for skill in software-engineering-mentor; do
+  for skill in engineering-mentor study-planner; do
     src="$root/skills/$skill"
     dst="$skills/$skill"
     [[ -f $src/SKILL.md ]] || fail "Missing skill: $src"
@@ -71,7 +73,7 @@ prepare_target() {
     backups+=("$backup")
   done
   # Retire old entrypoints without losing custom files or local data.
-  for skill in learn-mode work-mode learning-system; do
+  for skill in learn-mode work-mode learning-system software-engineering-mentor; do
     dst="$skills/$skill"
     if [[ -e $dst || -L $dst ]]; then
       [[ $force == true ]] || fail "Legacy skill exists: $dst. Use --force to back up and retire it."
@@ -89,29 +91,32 @@ prepare_target() {
   staged="$staging/$app.instructions"
   local input="$staging/$app.input"
   if [[ -f $instructions ]]; then
-    sed -e 's/^<!-- learning-modes:start -->$/<!-- software-engineering-mentor:start -->/' \
-        -e 's/^<!-- learning-modes:end -->$/<!-- software-engineering-mentor:end -->/' \
+    sed -e 's/^<!-- learning-modes:start -->$/<!-- engineering-learning-toolkit:start -->/' \
+        -e 's/^<!-- learning-modes:end -->$/<!-- engineering-learning-toolkit:end -->/' \
+        -e 's/^<!-- software-engineering-mentor:start -->$/<!-- engineering-learning-toolkit:start -->/' \
+        -e 's/^<!-- software-engineering-mentor:end -->$/<!-- engineering-learning-toolkit:end -->/' \
         "$instructions" > "$input"
   fi
   block="$staging/$app.block"
   cat > "$block" <<BLOCK
-<!-- software-engineering-mentor:start -->
-# Software Engineering Mentor
-For software engineering mentoring, practice, roadmap planning, or learning progress, apply the mentor:
-$reference
-<!-- software-engineering-mentor:end -->
+<!-- engineering-learning-toolkit:start -->
+# Engineering Learning Toolkit
+For study goals, competency gaps, learning resources, or roadmaps, read and apply $planner_reference (relative to this file).
+For guided engineering practice, implementation planning, or code and commit review, read and apply $mentor_reference (relative to this file).
+Continue the mentor through the ongoing practice session; repeated activation commands are unnecessary. Preserve the mentoring intent and next step in compaction summaries.
+<!-- engineering-learning-toolkit:end -->
 BLOCK
   if [[ -f $instructions ]]; then
     # Validate markers before writing either target. Replace only the managed block.
     awk '
-      $0 == "<!-- software-engineering-mentor:start -->" { if (inside || seen++) exit 1; inside=1 }
-      $0 == "<!-- software-engineering-mentor:end -->" { if (!inside) exit 1; inside=0 }
+      $0 == "<!-- engineering-learning-toolkit:start -->" { if (inside || seen++) exit 1; inside=1 }
+      $0 == "<!-- engineering-learning-toolkit:end -->" { if (!inside) exit 1; inside=0 }
       END { if (inside) exit 1 }
     ' "$input" || fail "Malformed managed block in $instructions"
     awk -v block="$block" '
       function emit() { while ((getline line < block) > 0) print line; close(block) }
-      $0 == "<!-- software-engineering-mentor:start -->" { emit(); inside=1; seen=1; next }
-      $0 == "<!-- software-engineering-mentor:end -->" { inside=0; next }
+      $0 == "<!-- engineering-learning-toolkit:start -->" { emit(); inside=1; seen=1; next }
+      $0 == "<!-- engineering-learning-toolkit:end -->" { inside=0; next }
       !inside { print }
       END { if (!seen) { if (NR) print ""; emit() } }
     ' "$input" > "$staged"
@@ -139,7 +144,7 @@ done
 [[ ! -e $memory || -d $memory ]] || fail "Expected directory: $memory"
 [[ ! -e $memory/archive || -d $memory/archive ]] || fail "Expected archive directory"
 for name in learning-profile.md progress.md; do
-  [[ -f $root/skills/software-engineering-mentor/assets/$name ]] || fail "Missing template: $name"
+  [[ -f $root/skills/engineering-mentor/assets/$name ]] || fail "Missing template: $name"
   [[ ! -e $memory/$name || -f $memory/$name ]] || fail "Expected memory file: $name"
 done
 legacy="$install_home/.learning-modes/progress.md"
@@ -152,7 +157,7 @@ if [[ -f $legacy && ! -e $memory/archive/legacy-learning-modes.md ]]; then
 fi
 for name in learning-profile.md progress.md; do
   if [[ ! -e $memory/$name ]]; then
-    cp -- "$root/skills/software-engineering-mentor/assets/$name" "$memory/$name"
+    cp -- "$root/skills/engineering-mentor/assets/$name" "$memory/$name"
   fi
 done
 
@@ -183,4 +188,4 @@ for ((i=0; i<${#sources[@]}; i++)); do
     printf "Installed %s\n" "$dst"
   fi
 done
-printf "Done. Start a new conversation to load the skills and mentor guidance.\n"
+printf "Done. Start a new conversation to load the learning toolkit.\n"

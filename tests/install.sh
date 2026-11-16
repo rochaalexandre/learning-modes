@@ -11,11 +11,13 @@ expect_failure() { if install "$@"; then fail "Expected installation failure"; f
 
 install --target both || fail "Fresh installation"
 for app in .agents .claude; do
-  [[ -L $test_home/$app/skills/software-engineering-mentor ]] || fail "Missing skill link"
+  for skill in engineering-mentor study-planner; do
+    [[ -L $test_home/$app/skills/$skill ]] || fail "Missing skill link: $app/$skill"
+  done
 done
 memory="$test_home/.software-engineering-mentor"
 [[ -d $memory/archive ]] || fail "Missing archive"
-cmp "$memory/progress.md" "$root/skills/software-engineering-mentor/assets/progress.md"
+cmp "$memory/progress.md" "$root/skills/engineering-mentor/assets/progress.md"
 printf 'Personal preference\n' > "$memory/learning-profile.md"
 printf 'Active evidence\n' > "$memory/progress.md"
 printf 'Historical evidence\n' > "$memory/archive/cycle.md"
@@ -69,11 +71,40 @@ test_home="$scratch/codex-only"
 mkdir "$test_home"
 install --target codex || fail "Codex-only installation"
 [[ ! -e $test_home/.claude ]] || fail "Installed unselected agent"
-rm "$test_home/.agents/skills/software-engineering-mentor"
-mkdir "$test_home/.agents/skills/software-engineering-mentor"
-printf 'Custom skill\n' > "$test_home/.agents/skills/software-engineering-mentor/custom.md"
+rm "$test_home/.agents/skills/engineering-mentor"
+mkdir "$test_home/.agents/skills/engineering-mentor"
+printf 'Custom skill\n' > "$test_home/.agents/skills/engineering-mentor/custom.md"
 expect_failure --target codex
 install --target codex --force || fail "Conflict backup"
 [[ $(find "$test_home/.learning-modes-backups" -name custom.md | wc -l | tr -d ' ') == 1 ]] || fail "Missing conflict backup"
 expect_failure --target invalid
+# Upgrade the earlier single-mentor PR installation, preserving both agents' memory.
+test_home="$scratch/single-mentor-upgrade"
+mkdir -p "$test_home/.agents/skills/software-engineering-mentor" "$test_home/.claude/skills/software-engineering-mentor" "$test_home/.software-engineering-mentor/archive" "$test_home/.codex" "$test_home/.claude"
+printf 'Existing preferences\n' > "$test_home/.software-engineering-mentor/learning-profile.md"
+printf 'Existing active evidence\n' > "$test_home/.software-engineering-mentor/progress.md"
+printf 'Existing cycle\n' > "$test_home/.software-engineering-mentor/archive/old.md"
+printf 'Local customized skill\n' > "$test_home/.agents/skills/software-engineering-mentor/custom.md"
+for instructions in "$test_home/.codex/AGENTS.md" "$test_home/.claude/CLAUDE.md"; do
+  printf 'Keep my instructions\n<!-- software-engineering-mentor:start -->\nOld single mentor\n<!-- software-engineering-mentor:end -->\n' > "$instructions"
+done
+expect_failure --target both
+install --target both --force || fail "Single mentor upgrade"
+for app in .agents .claude; do
+  [[ ! -e $test_home/$app/skills/software-engineering-mentor ]] || fail "Old mentor still active"
+  for skill in engineering-mentor study-planner; do
+    [[ -f $test_home/$app/skills/$skill/SKILL.md ]] || fail "Missing new entrypoint"
+  done
+done
+for instructions in "$test_home/.codex/AGENTS.md" "$test_home/.claude/CLAUDE.md"; do
+  [[ $(head -n 1 "$instructions") == 'Keep my instructions' ]] || fail "Lost user instruction"
+  if grep -q 'Old single mentor' "$instructions"; then fail "Old startup block retained"; fi
+done
+[[ $(cat "$test_home/.software-engineering-mentor/learning-profile.md") == 'Existing preferences' ]] || fail "Upgrade replaced profile"
+[[ $(cat "$test_home/.software-engineering-mentor/progress.md") == 'Existing active evidence' ]] || fail "Upgrade replaced progress"
+[[ $(cat "$test_home/.software-engineering-mentor/archive/old.md") == 'Existing cycle' ]] || fail "Upgrade replaced archive"
+[[ $(find "$test_home/.learning-modes-backups" -name custom.md | wc -l | tr -d ' ') == 1 ]] || fail "Lost customized single mentor"
+cp "$test_home/.claude/CLAUDE.md" "$scratch/upgraded-startup"
+install --target both || fail "Toolkit repeat installation"
+cmp "$scratch/upgraded-startup" "$test_home/.claude/CLAUDE.md"
 printf 'All installer tests passed.\n'
